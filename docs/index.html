@@ -253,13 +253,11 @@
 
   function renderJobs() {
     const search = document.getElementById("search").value.toLowerCase();
-    const city = document.getElementById("city").value.toLowerCase();
     const category = document.getElementById("category").value;
     const source = document.getElementById("source").value;
 
     const filtered = allJobs.filter(j => {
       if (search && !j["Job Title"].toLowerCase().includes(search) && !j["Company"].toLowerCase().includes(search)) return false;
-      if (city && !j["Location"].toLowerCase().includes(city)) return false;
       if (category && j["Category"] !== category) return false;
       if (source && j["Source"] !== source) return false;
       return true;
