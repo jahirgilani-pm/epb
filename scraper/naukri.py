@@ -1,68 +1,113 @@
-import requests
-from bs4 import BeautifulSoup
 import time
+import requests
+from playwright.sync_api import sync_playwright
 
 CITIES = {
-    "bangalore": "bengaluru",
-    "hyderabad": "hyderabad",
+    "bangalore": "fresher-jobs-in-bangalore",
+    "hyderabad": "fresher-jobs-in-hyderabad",
 }
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+API_URL = "https://www.naukri.com/jobapi/v3/search"
+BASE_HEADERS = {
+    "appid": "109",
+    "systemid": "Naukri",
+    "clientid": "d3skt0p",
+    "accept": "application/json",
+    "content-type": "application/json",
+    "gid": "LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE",
+    "user-agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
+        "Chrome/149.0.0.0 Safari/537.36"
     ),
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
 
-def scrape_city(city_key: str) -> list[dict]:
-    url = f"https://www.naukri.com/fresher-jobs-in-{city_key}"
-    jobs = []
+def get_nkparam() -> str:
+    """Load Naukri in a real browser and intercept the API call to capture nkparam."""
+    nkparam = None
+
+    def handle_request(request):
+        nonlocal nkparam
+        if "jobapi/v3/search" in request.url and nkparam is None:
+            nkparam = request.headers.get("nkparam", "")
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(
+            user_agent=(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/149.0.0.0 Safari/537.36"
+            )
+        )
+        page.on("request", handle_request)
+        try:
+            page.goto(
+                "https://www.naukri.com/fresher-jobs-in-bangalore",
+                wait_until="domcontentloaded",
+                timeout=30000,
+            )
+            # wait for API call to fire
+            for _ in range(20):
+                if nkparam:
+                    break
+                time.sleep(0.5)
+        except Exception as e:
+            print(f"[Naukri] Browser error: {e}")
+        finally:
+            browser.close()
+
+    if not nkparam:
+        print("[Naukri] Warning: could not capture nkparam")
+    return nkparam or ""
+
+
+def fetch_city(city_key: str, nkparam: str) -> list[dict]:
+    seo_key = CITIES[city_key]
+    params = {
+        "noOfResults": 30,
+        "urlType": "search_by_key_loc",
+        "searchType": "adv",
+        "location": city_key,
+        "keyword": "fresher",
+        "pageNo": 1,
+        "seoKey": seo_key,
+        "src": "directSearch",
+        "latLong": "",
+    }
+    headers = {
+        **BASE_HEADERS,
+        "nkparam": nkparam,
+        "referer": f"https://www.naukri.com/{seo_key}",
+    }
 
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp = requests.get(API_URL, params=params, headers=headers, timeout=15)
         resp.raise_for_status()
-    except requests.RequestException as e:
-        print(f"[Naukri] Failed to fetch {city_key}: {e}")
-        return jobs
+        raw_jobs = resp.json().get("jobDetails", [])
+    except Exception as e:
+        print(f"[Naukri] API error for {city_key}: {e}")
+        return []
 
-    soup = BeautifulSoup(resp.text, "html.parser")
-    cards = soup.select(".srp-jobtuple-wrapper .cust-job-tuple")
-
-    for card in cards:
+    jobs = []
+    for j in raw_jobs:
         try:
-            title_tag = card.select_one("h2 a.title")
-            if not title_tag:
-                continue
+            title = j.get("title", "")
+            company = j.get("companyName", "")
+            apply_url = "https://www.naukri.com" + j.get("jdURL", "")
 
-            title = title_tag.get_text(strip=True)
-            apply_url = title_tag["href"]
-
-            company_tag = card.select_one("a.comp-name")
-            company = company_tag.get_text(strip=True) if company_tag else ""
-
-            exp_tag = card.select_one(".expwdth")
-            experience = exp_tag.get_text(strip=True) if exp_tag else "Fresher"
-
-            sal_tag = card.select_one(".sal span[title]")
-            salary = sal_tag["title"].strip() if sal_tag else ""
-
-            loc_tag = card.select_one(".locWdth")
-            location_raw = loc_tag.get_text(strip=True) if loc_tag else city_key.capitalize()
-            # normalize to just BLR/HYD label if it contains target city
+            placeholders = {p["type"]: p["label"] for p in j.get("placeholders", [])}
+            experience = placeholders.get("experience", "Fresher")
+            salary = placeholders.get("salary", "")
+            location_raw = placeholders.get("location", city_key.capitalize())
             location = normalize_location(location_raw, city_key)
 
-            desc_tag = card.select_one(".job-desc")
-            description = desc_tag.get_text(strip=True)[:500] if desc_tag else ""
+            skills_raw = j.get("tagsAndSkills", "")
+            skills = [s.strip() for s in skills_raw.split(",") if s.strip()]
 
-            skills = [li.get_text(strip=True) for li in card.select(".tag-li")]
-
-            posted_tag = card.select_one(".job-post-day")
-            posted = posted_tag.get_text(strip=True) if posted_tag else ""
-
+            description = j.get("jobDescription", "")[:500]
+            posted = j.get("footerPlaceholderLabel", "")
             category = infer_category(title, skills)
 
             jobs.append({
@@ -78,7 +123,7 @@ def scrape_city(city_key: str) -> list[dict]:
                 "source": "Naukri",
             })
         except Exception as e:
-            print(f"[Naukri] Error parsing card: {e}")
+            print(f"[Naukri] Error parsing job: {e}")
             continue
 
     print(f"[Naukri] {city_key}: {len(jobs)} jobs found")
@@ -86,9 +131,12 @@ def scrape_city(city_key: str) -> list[dict]:
 
 
 def scrape() -> list[dict]:
+    print("[Naukri] Capturing session token...")
+    nkparam = get_nkparam()
+
     all_jobs = []
     for city_key in CITIES:
-        all_jobs.extend(scrape_city(city_key))
+        all_jobs.extend(fetch_city(city_key, nkparam))
         time.sleep(2)
     return all_jobs
 
