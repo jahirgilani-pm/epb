@@ -203,14 +203,12 @@
 <div class="jobs" id="jobs"><div class="loading">Loading jobs...</div></div>
 
 <script>
-  // Replace with your Google Sheet ID and sheet name
-  const SHEET_ID = "1UcXA3xn6Ok4LCYrPHKVlM9gfmkGAEOWmufY0g4GjHXU";
-  const SHEET_NAME = "Jobs";
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ84-rtv8YpHvWzaSJ9DkCjT9gSvDWEhG2NArOiYjJ1w3GYBTh20MPkiYn87wZDsyl7R1-tXDfbd-A3/pub?gid=625668732&single=true&output=csv";
 
   let allJobs = [];
 
   async function loadJobs() {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    const url = CSV_URL;
     try {
       const resp = await fetch(url);
       const csv = await resp.text();
