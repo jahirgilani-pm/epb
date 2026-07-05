@@ -108,34 +108,34 @@
 
     /* ── Grid ── */
     .jobs-grid {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 16px auto 48px;
       padding: 0 24px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
 
     /* ── Card ── */
     .card {
       background: #fff;
-      border-radius: 14px;
+      border-radius: 12px;
       border: 1px solid #e5e7eb;
-      padding: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       transition: box-shadow 0.15s, transform 0.15s;
       cursor: default;
     }
     .card:hover {
-      box-shadow: 0 8px 24px rgba(37,99,235,0.1);
+      box-shadow: 0 6px 20px rgba(37,99,235,0.1);
       transform: translateY(-2px);
     }
 
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-    .card-title { font-size: 0.975rem; font-weight: 700; color: #111827; line-height: 1.35; }
-    .card-company { font-size: 0.82rem; color: #4b5563; margin-top: 3px; font-weight: 500; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .card-title { font-size: 0.875rem; font-weight: 700; color: #111827; line-height: 1.35; }
+    .card-company { font-size: 0.775rem; color: #4b5563; margin-top: 2px; font-weight: 500; }
 
     .source-pill {
       font-size: 0.65rem;
@@ -159,14 +159,14 @@
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 0.75rem;
+      gap: 3px;
+      font-size: 0.7rem;
       color: #374151;
       background: #f3f4f6;
-      border-radius: 6px;
-      padding: 4px 9px;
+      border-radius: 5px;
+      padding: 3px 7px;
     }
-    .chip-icon { font-size: 0.8rem; }
+    .chip-icon { font-size: 0.75rem; }
 
     .category-tag {
       display: inline-block;
@@ -211,6 +211,9 @@
     .state-box p { color: #6b7280; font-size: 0.95rem; }
 
     /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .jobs-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     @media (max-width: 600px) {
       header { padding: 24px 16px 20px; }
       header h1 { font-size: 1.4rem; }
@@ -247,6 +250,9 @@
       <option value="Operations">Operations</option>
       <option value="Other">Other</option>
     </select>
+    <select id="location" onchange="renderJobs()">
+      <option value="">All Locations</option>
+    </select>
     <select id="source" onchange="renderJobs()">
       <option value="">All Sources</option>
       <option value="Internshala">Internshala</option>
@@ -274,6 +280,7 @@
       const resp = await fetch(CSV_URL);
       const csv = await resp.text();
       allJobs = parseCSV(csv);
+      populateLocations(allJobs);
       renderJobs();
     } catch (e) {
       document.getElementById("jobs").innerHTML = '<div class="state-box"><div class="icon">&#9888;</div><p>Failed to load jobs. Please try again later.</p></div>';
@@ -290,6 +297,36 @@
       headers.forEach((h, i) => obj[h.trim()] = (vals[i] || "").trim());
       return obj;
     }).filter(j => j["Job Title"] && j["Company"] && j["Apply URL"]);
+  }
+
+  function postedScore(posted) {
+    if (!posted) return 9999;
+    const s = posted.toLowerCase();
+    if (s.includes("today") || s.includes("just") || s.includes("hour")) return 0;
+    const days = s.match(/(\d+)\s*day/);
+    if (days) return parseInt(days[1]);
+    const weeks = s.match(/(\d+)\s*week/);
+    if (weeks) return parseInt(weeks[1]) * 7;
+    const months = s.match(/(\d+)\s*month/);
+    if (months) return parseInt(months[1]) * 30;
+    if (s.includes("30+") || s.includes("month")) return 30;
+    return 9999;
+  }
+
+  function populateLocations(jobs) {
+    const seen = new Set();
+    const sel = document.getElementById("location");
+    jobs.forEach(j => {
+      const loc = (j["Location"] || "").trim();
+      if (loc && !seen.has(loc)) { seen.add(loc); }
+    });
+    const sorted = [...seen].sort();
+    sorted.forEach(loc => {
+      const opt = document.createElement("option");
+      opt.value = loc;
+      opt.textContent = loc;
+      sel.appendChild(opt);
+    });
   }
 
   function parseCSVLine(line) {
@@ -314,13 +351,19 @@
   function renderJobs() {
     const search = document.getElementById("search").value.toLowerCase();
     const category = document.getElementById("category").value;
+    const location = document.getElementById("location").value;
     const source = document.getElementById("source").value;
 
     const filtered = allJobs.filter(j => {
       if (search && !j["Job Title"].toLowerCase().includes(search) && !j["Company"].toLowerCase().includes(search)) return false;
       if (category && j["Category"] !== category) return false;
+      if (location && j["Location"] !== location) return false;
       if (source && j["Source"] !== source) return false;
       return true;
+    }).sort((a, b) => {
+      const dateDiff = (b["Scraped Date"] || "").localeCompare(a["Scraped Date"] || "");
+      if (dateDiff !== 0) return dateDiff;
+      return postedScore(a["Posted"]) - postedScore(b["Posted"]);
     });
 
     const count = filtered.length;
