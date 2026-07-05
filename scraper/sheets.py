@@ -31,19 +31,32 @@ def write_jobs(jobs: list[dict]) -> None:
 
     today = date.today().isoformat()
 
-    # load existing rows to deduplicate by apply_url
+    # load existing rows to deduplicate by url and title+company
     existing = worksheet.get_all_values()
     if not existing or existing[0] != SHEET_HEADERS:
         worksheet.clear()
         worksheet.append_row(SHEET_HEADERS)
         existing_urls = set()
+        existing_title_company = set()
     else:
         url_col = SHEET_HEADERS.index("Apply URL")
-        existing_urls = {row[url_col] for row in existing[1:] if len(row) > url_col}
+        title_col = SHEET_HEADERS.index("Job Title")
+        company_col = SHEET_HEADERS.index("Company")
+        existing_urls = set()
+        existing_title_company = set()
+        for row in existing[1:]:
+            if len(row) > url_col:
+                existing_urls.add(row[url_col])
+            if len(row) > max(title_col, company_col):
+                existing_title_company.add(
+                    (row[title_col].strip().lower(), row[company_col].strip().lower())
+                )
 
     new_rows = []
     for job in jobs:
-        if job["apply_url"] in existing_urls:
+        url = job.get("apply_url", "")
+        tc = (job.get("title", "").strip().lower(), job.get("company", "").strip().lower())
+        if url in existing_urls or tc in existing_title_company:
             continue
         new_rows.append([
             job.get("title", ""),
@@ -54,11 +67,12 @@ def write_jobs(jobs: list[dict]) -> None:
             job.get("salary", ""),
             job.get("description", ""),
             job.get("posted", ""),
-            job.get("apply_url", ""),
+            url,
             job.get("source", ""),
             today,
         ])
-        existing_urls.add(job["apply_url"])
+        existing_urls.add(url)
+        existing_title_company.add(tc)
 
     if new_rows:
         worksheet.append_rows(new_rows, value_input_option="RAW")

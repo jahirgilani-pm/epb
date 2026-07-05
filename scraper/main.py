@@ -4,14 +4,26 @@ import indeed
 import sheets
 
 
+def job_key(job: dict) -> tuple:
+    return (
+        job["apply_url"],
+        job["title"].strip().lower(),
+        job["company"].strip().lower(),
+    )
+
+
 def deduplicate(jobs: list[dict]) -> list[dict]:
-    seen = set()
+    seen_urls = set()
+    seen_title_company = set()
     unique = []
     for job in jobs:
-        key = job["apply_url"]
-        if key not in seen:
-            seen.add(key)
-            unique.append(job)
+        url = job["apply_url"]
+        tc = (job["title"].strip().lower(), job["company"].strip().lower())
+        if url in seen_urls or tc in seen_title_company:
+            continue
+        seen_urls.add(url)
+        seen_title_company.add(tc)
+        unique.append(job)
     return unique
 
 
