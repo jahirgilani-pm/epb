@@ -23,27 +23,6 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install chromium
 
-      - name: Validate credentials
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-        run: |
-          python3 -c "
-          import json, os, sys
-          raw = os.environ['GOOGLE_CREDENTIALS']
-          try:
-              data = json.loads(raw)
-              email = data.get('client_email', 'missing')
-              key_id = data.get('private_key_id', 'missing')[:8]
-              lines = [l for l in data.get('private_key','').split('\n') if l and not l.startswith('-----')]
-              bad = [(i, len(l)) for i, l in enumerate(lines) if len(l) != 64]
-              print(f'email: {email}')
-              print(f'key_id prefix: {key_id}')
-              print(f'key lines: {len(lines)}, bad lines: {bad}')
-          except Exception as e:
-              print(f'JSON parse error: {e}')
-              sys.exit(1)
-          "
-
       - name: Run scraper
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
