@@ -343,12 +343,12 @@
 
   function inferEducation(job) {
     const text = ((job["Description"] || "") + " " + (job["Job Title"] || "") + " " + (job["Experience"] || "")).toLowerCase();
-    if (/b\.?tech|b\.?e\b|btech|engineering graduate|be\/b/.test(text)) return "B.Tech/BE";
-    if (/\bmba\b|pgdm|post.?graduate/.test(text)) return "MBA/PG";
-    if (/b\.?com|bba|bms|\bcommerce/.test(text)) return "B.Com/BBA";
-    if (/12th|hsc|\bpuc\b|intermediate|\bdiploma/.test(text)) return "12th/Diploma";
-    if (/any graduate|any degree|graduate|bachelor/.test(text)) return "Any Graduate";
-    return "";
+    if (/b\.?tech|b\.?e\b|btech|engineering graduate|be\/b|b\.?eng/.test(text)) return "B.Tech/BE";
+    if (/\bmba\b|pgdm|post.?graduate|master.?degree|m\.?b\.?a/.test(text)) return "MBA/PG";
+    if (/b\.?com|bba|bms|\bcommerce|b\.?sc\b|bsc\b|b\.?a\b|arts graduate/.test(text)) return "B.Com/BBA";
+    if (/12th|hsc|\bpuc\b|intermediate|\bdiploma|10\+2|plus two/.test(text)) return "12th/Diploma";
+    if (/any graduate|any degree|any bachelor|fresh graduate|graduation|bachelor|b\.sc|bsc|undergraduate/.test(text)) return "Any Graduate";
+    return "Any Graduate";
   }
 
   function populateLocations(jobs) {

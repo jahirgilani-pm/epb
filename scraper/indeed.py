@@ -74,7 +74,7 @@ def scrape() -> list[dict]:
                     salary = salary_tag.get_text(strip=True) if salary_tag else ""
 
                     desc_tag = card.select_one(".underShelfFooter, [class*='snippet']")
-                    description = desc_tag.get_text(strip=True)[:500] if desc_tag else ""
+                    description = desc_tag.get_text(strip=True)[:1000] if desc_tag else ""
 
                     category = infer_category(title)
 

@@ -105,7 +105,7 @@ def fetch_city(city_key: str, nkparam: str) -> list[dict]:
             skills_raw = j.get("tagsAndSkills", "")
             skills = [s.strip() for s in skills_raw.split(",") if s.strip()]
 
-            description = j.get("jobDescription", "")[:500]
+            description = j.get("jobDescription", "")[:1000]
             posted = j.get("footerPlaceholderLabel", "")
             category = infer_category(title, skills)
 
