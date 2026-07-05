@@ -3,204 +3,266 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EPB Job Tracker - Bengaluru & Hyderabad</title>
+  <title>EPB Job Tracker - Bengaluru</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f6fa;
-      color: #1a1a2e;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #111827;
       min-height: 100vh;
     }
 
+    /* ── Header ── */
     header {
-      background: #1a1a2e;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
       color: #fff;
-      padding: 24px 20px 20px;
+      padding: 32px 24px 28px;
+      text-align: center;
     }
-    header h1 { font-size: 1.4rem; font-weight: 700; }
-    header p { font-size: 0.85rem; color: #a0a8c0; margin-top: 4px; }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      margin-bottom: 12px;
+    }
+    header h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; }
+    header p { font-size: 0.9rem; color: rgba(255,255,255,0.75); margin-top: 6px; }
 
-    .filters {
+    /* ── Filters ── */
+    .filter-bar {
       background: #fff;
-      border-bottom: 1px solid #e2e6f0;
-      padding: 14px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 14px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .filter-inner {
+      max-width: 1100px;
+      margin: 0 auto;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
-    .filters select {
-      border: 1px solid #d0d5e8;
+    .search-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+    .filter-inner input {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      border: 1.5px solid #e5e7eb;
       border-radius: 8px;
-      padding: 8px 12px;
       font-size: 0.875rem;
-      background: #fff;
-      color: #1a1a2e;
+      outline: none;
+      transition: border-color 0.15s;
+      background: #f9fafb;
+    }
+    .filter-inner input:focus { border-color: #2563eb; background: #fff; }
+    .filter-inner select {
+      padding: 9px 32px 9px 12px;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: #f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+      -webkit-appearance: none;
+      appearance: none;
       cursor: pointer;
       outline: none;
+      transition: border-color 0.15s;
+      color: #374151;
     }
-    .filters select:focus { border-color: #4f6ef7; }
+    .filter-inner select:focus { border-color: #2563eb; background-color: #fff; }
 
-    .filters input[type="text"] {
-      border: 1px solid #d0d5e8;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.875rem;
-      flex: 1;
-      min-width: 180px;
-      outline: none;
-    }
-    .filters input[type="text"]:focus { border-color: #4f6ef7; }
-
-    .meta {
-      padding: 12px 20px;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-
-    .jobs {
-      padding: 0 20px 40px;
-      display: grid;
-      gap: 14px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 18px;
-      border: 1px solid #e8ecf5;
-      transition: box-shadow 0.15s;
-    }
-    .card:hover { box-shadow: 0 4px 16px rgba(79,110,247,0.1); }
-
-    .card-top {
+    /* ── Stats bar ── */
+    .stats-bar {
+      max-width: 1100px;
+      margin: 16px auto 0;
+      padding: 0 24px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
+    }
+    .stats-bar .count { font-size: 0.82rem; color: #6b7280; }
+    .stats-bar .count strong { color: #111827; font-weight: 600; }
+
+    /* ── Grid ── */
+    .jobs-grid {
+      max-width: 1100px;
+      margin: 16px auto 48px;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
+      transition: box-shadow 0.15s, transform 0.15s;
+      cursor: default;
+    }
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(37,99,235,0.1);
+      transform: translateY(-2px);
     }
 
-    .card-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1a1a2e;
-    }
-    .card-company {
-      font-size: 0.875rem;
-      color: #4b5563;
-      margin-top: 3px;
-    }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .card-title { font-size: 0.975rem; font-weight: 700; color: #111827; line-height: 1.35; }
+    .card-company { font-size: 0.82rem; color: #4b5563; margin-top: 3px; font-weight: 500; }
 
-    .card-source {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 3px 8px;
+    .source-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 3px 9px;
       border-radius: 20px;
       white-space: nowrap;
       flex-shrink: 0;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
-    .source-internshala { background: #fff3cd; color: #856404; }
-    .source-naukri { background: #d1ecf1; color: #0c5460; }
+    .source-internshala { background: #fef3c7; color: #92400e; }
+    .source-indeed { background: #dbeafe; color: #1e40af; }
+    .source-naukri { background: #dcfce7; color: #166534; }
 
-    .card-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-    .card-meta span { display: flex; align-items: center; gap: 4px; }
-
-    .card-tags {
+    .card-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 10px;
     }
-    .tag {
-      font-size: 0.73rem;
-      background: #f0f2ff;
-      color: #4f6ef7;
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: #374151;
+      background: #f3f4f6;
+      border-radius: 6px;
+      padding: 4px 9px;
+    }
+    .chip-icon { font-size: 0.8rem; }
+
+    .category-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: #eff6ff;
+      color: #2563eb;
       border-radius: 6px;
       padding: 3px 8px;
     }
 
     .card-footer {
+      margin-top: auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 14px;
       padding-top: 12px;
-      border-top: 1px solid #f0f2f8;
+      border-top: 1px solid #f3f4f6;
     }
-    .posted { font-size: 0.75rem; color: #9ca3af; }
+    .posted { font-size: 0.72rem; color: #9ca3af; }
     .apply-btn {
-      background: #4f6ef7;
+      background: #2563eb;
       color: #fff;
       text-decoration: none;
-      padding: 7px 16px;
+      padding: 7px 18px;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       transition: background 0.15s;
+      letter-spacing: 0.01em;
     }
-    .apply-btn:hover { background: #3b57e0; }
+    .apply-btn:hover { background: #1d4ed8; }
 
-    .empty {
+    /* ── States ── */
+    .state-box {
+      max-width: 1100px;
+      margin: 48px auto;
+      padding: 0 24px;
       text-align: center;
-      color: #9ca3af;
-      padding: 60px 20px;
-      font-size: 0.95rem;
     }
+    .state-box .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .state-box p { color: #6b7280; font-size: 0.95rem; }
 
-    .loading {
-      text-align: center;
-      padding: 60px 20px;
-      color: #6b7280;
-    }
-
-    @media (max-width: 480px) {
-      .filters { gap: 8px; }
-      .filters select, .filters input[type="text"] { width: 100%; }
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      header { padding: 24px 16px 20px; }
+      header h1 { font-size: 1.4rem; }
+      .filter-bar { padding: 12px 16px; }
+      .filter-inner input, .filter-inner select { font-size: 0.82rem; }
+      .jobs-grid { padding: 0 16px; grid-template-columns: 1fr; }
+      .stats-bar { padding: 0 16px; }
     }
   </style>
 </head>
 <body>
 
 <header>
+  <div class="header-badge">Agakhan Economic Planning Board</div>
   <h1>EPB Job Tracker</h1>
-  <p>Fresher & entry-level jobs in Bengaluru</p>
+  <p>Fresher & entry-level opportunities in Bengaluru — updated daily</p>
 </header>
 
-<div class="filters">
-  <input type="text" id="search" placeholder="Search by title or company..." oninput="renderJobs()" />
-  <select id="category" onchange="renderJobs()">
-    <option value="">All Categories</option>
-    <option value="IT / Tech">IT / Tech</option>
-    <option value="Sales">Sales</option>
-    <option value="Marketing">Marketing</option>
-    <option value="Finance">Finance</option>
-    <option value="HR">HR</option>
-    <option value="Design">Design</option>
-    <option value="Customer Service">Customer Service</option>
-    <option value="Operations">Operations</option>
-    <option value="Other">Other</option>
-  </select>
-  <select id="source" onchange="renderJobs()">
-    <option value="">All Sources</option>
-    <option value="Internshala">Internshala</option>
-    <option value="Indeed">Indeed</option>
-    <option value="Naukri">Naukri</option>
-  </select>
+<div class="filter-bar">
+  <div class="filter-inner">
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="search" placeholder="Search by title or company..." oninput="renderJobs()" />
+    </div>
+    <select id="category" onchange="renderJobs()">
+      <option value="">All Categories</option>
+      <option value="IT / Tech">IT / Tech</option>
+      <option value="Sales">Sales</option>
+      <option value="Marketing">Marketing</option>
+      <option value="Finance">Finance</option>
+      <option value="HR">HR</option>
+      <option value="Design">Design</option>
+      <option value="Customer Service">Customer Service</option>
+      <option value="Operations">Operations</option>
+      <option value="Other">Other</option>
+    </select>
+    <select id="source" onchange="renderJobs()">
+      <option value="">All Sources</option>
+      <option value="Internshala">Internshala</option>
+      <option value="Indeed">Indeed</option>
+      <option value="Naukri">Naukri</option>
+    </select>
+  </div>
 </div>
 
-<div class="meta" id="meta"></div>
-<div class="jobs" id="jobs"><div class="loading">Loading jobs...</div></div>
+<div class="stats-bar">
+  <p class="count" id="meta"></p>
+</div>
+
+<div class="jobs-grid" id="jobs">
+  <div class="state-box"><p>Loading jobs...</p></div>
+</div>
 
 <script>
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ84-rtv8YpHvWzaSJ9DkCjT9gSvDWEhG2NArOiYjJ1w3GYBTh20MPkiYn87wZDsyl7R1-tXDfbd-A3/pub?gid=625668732&single=true&output=csv";
@@ -208,14 +270,13 @@
   let allJobs = [];
 
   async function loadJobs() {
-    const url = CSV_URL;
     try {
-      const resp = await fetch(url);
+      const resp = await fetch(CSV_URL);
       const csv = await resp.text();
       allJobs = parseCSV(csv);
       renderJobs();
     } catch (e) {
-      document.getElementById("jobs").innerHTML = '<div class="empty">Failed to load jobs. Please try again later.</div>';
+      document.getElementById("jobs").innerHTML = '<div class="state-box"><div class="icon">&#9888;</div><p>Failed to load jobs. Please try again later.</p></div>';
     }
   }
 
@@ -226,9 +287,9 @@
     return lines.slice(1).map(line => {
       const vals = parseCSVLine(line);
       const obj = {};
-      headers.forEach((h, i) => obj[h] = (vals[i] || "").trim());
+      headers.forEach((h, i) => obj[h.trim()] = (vals[i] || "").trim());
       return obj;
-    }).filter(j => j["Job Title"]);
+    }).filter(j => j["Job Title"] && j["Company"] && j["Apply URL"]);
   }
 
   function parseCSVLine(line) {
@@ -241,8 +302,7 @@
         if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
         else inQuotes = !inQuotes;
       } else if (ch === "," && !inQuotes) {
-        result.push(current);
-        current = "";
+        result.push(current); current = "";
       } else {
         current += ch;
       }
@@ -263,35 +323,38 @@
       return true;
     });
 
-    document.getElementById("meta").textContent = `${filtered.length} job${filtered.length !== 1 ? "s" : ""} found`;
+    const count = filtered.length;
+    document.getElementById("meta").innerHTML = `<strong>${count}</strong> job${count !== 1 ? "s" : ""} found`;
 
     const container = document.getElementById("jobs");
-    if (!filtered.length) {
-      container.innerHTML = '<div class="empty">No jobs match your filters.</div>';
+    if (!count) {
+      container.innerHTML = '<div class="state-box"><div class="icon">&#128269;</div><p>No jobs match your filters.</p></div>';
       return;
     }
 
-    container.innerHTML = filtered.map(j => `
+    container.innerHTML = filtered.map(j => {
+      const src = (j["Source"] || "").toLowerCase();
+      return `
       <div class="card">
-        <div class="card-top">
+        <div class="card-header">
           <div>
             <div class="card-title">${esc(j["Job Title"])}</div>
             <div class="card-company">${esc(j["Company"])}</div>
           </div>
-          <span class="card-source source-${(j["Source"] || "").toLowerCase()}">${esc(j["Source"])}</span>
+          <span class="source-pill source-${src}">${esc(j["Source"])}</span>
         </div>
-        <div class="card-meta">
-          ${j["Location"] ? `<span>📍 ${esc(j["Location"])}</span>` : ""}
-          ${j["Experience"] ? `<span>💼 ${esc(j["Experience"])}</span>` : ""}
-          ${j["Salary"] ? `<span>💰 ${esc(j["Salary"])}</span>` : ""}
+        <div class="card-chips">
+          ${j["Location"] ? `<span class="chip"><span class="chip-icon">&#128205;</span>${esc(j["Location"])}</span>` : ""}
+          ${j["Experience"] ? `<span class="chip"><span class="chip-icon">&#128188;</span>${esc(j["Experience"])}</span>` : ""}
+          ${j["Salary"] ? `<span class="chip"><span class="chip-icon">&#8377;</span>${esc(j["Salary"])}</span>` : ""}
         </div>
-        ${j["Category"] ? `<div class="card-tags"><span class="tag">${esc(j["Category"])}</span></div>` : ""}
+        ${j["Category"] ? `<div><span class="category-tag">${esc(j["Category"])}</span></div>` : ""}
         <div class="card-footer">
           <span class="posted">${esc(j["Posted"] || j["Scraped Date"] || "")}</span>
-          <a class="apply-btn" href="${esc(j["Apply URL"])}" target="_blank" rel="noopener noreferrer">Apply →</a>
+          <a class="apply-btn" href="${esc(j["Apply URL"])}" target="_blank" rel="noopener noreferrer">Apply &rarr;</a>
         </div>
-      </div>
-    `).join("");
+      </div>`;
+    }).join("");
   }
 
   function esc(str) {

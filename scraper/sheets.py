@@ -58,6 +58,8 @@ def write_jobs(jobs: list[dict]) -> None:
         tc = (job.get("title", "").strip().lower(), job.get("company", "").strip().lower())
         if url in existing_urls or tc in existing_title_company:
             continue
+        # strip newlines from description to prevent CSV row corruption
+        description = job.get("description", "").replace("\n", " ").replace("\r", " ").strip()
         new_rows.append([
             job.get("title", ""),
             job.get("company", ""),
@@ -65,7 +67,7 @@ def write_jobs(jobs: list[dict]) -> None:
             job.get("category", ""),
             job.get("experience", ""),
             job.get("salary", ""),
-            job.get("description", ""),
+            description,
             job.get("posted", ""),
             url,
             job.get("source", ""),
