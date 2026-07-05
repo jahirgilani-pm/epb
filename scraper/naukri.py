@@ -4,7 +4,6 @@ from playwright.sync_api import sync_playwright
 
 CITIES = {
     "bangalore": "fresher-jobs-in-bangalore",
-    "hyderabad": "fresher-jobs-in-hyderabad",
 }
 
 API_URL = "https://www.naukri.com/jobapi/v3/search"

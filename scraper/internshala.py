@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import time
 
 BASE_URL = "https://internshala.com"
-CITIES = ["bangalore", "hyderabad"]
+CITIES = ["bangalore"]
 
 HEADERS = {
     "User-Agent": (
