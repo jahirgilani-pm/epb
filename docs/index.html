@@ -276,7 +276,6 @@
       <option value="">All Sources</option>
       <option value="Internshala">Internshala</option>
       <option value="Indeed">Indeed</option>
-      <option value="Naukri">Naukri</option>
     </select>
   </div>
 </div>
@@ -334,10 +333,11 @@
     return 9999;
   }
 
+  const BENGALURU_LOCALITIES = /^(bommanhalli|bommanahalli|bellandur|hsr|btm|koramangala|indiranagar|whitefield|electronic city|hebbal|yeshwanthpur|jayanagar|jp nagar|malleshwaram|rajajinagar|bangalore|bengaluru)/i;
   function normalizeArea(raw) {
     if (!raw) return "";
     let area = raw.split(",")[0].trim();
-    if (/^bangal/i.test(area)) area = "Bengaluru";
+    if (/^bangal/i.test(area) || BENGALURU_LOCALITIES.test(area)) area = "Bengaluru";
     return area;
   }
 
