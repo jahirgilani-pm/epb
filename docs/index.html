@@ -123,7 +123,7 @@
       margin: 16px auto 48px;
       padding: 0 24px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 14px;
     }
 
@@ -223,7 +223,10 @@
     .state-box p { color: #6b7280; font-size: 0.95rem; }
 
     /* ── Responsive ── */
-    @media (max-width: 900px) {
+    @media (max-width: 1100px) {
+      .jobs-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 800px) {
       .jobs-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 600px) {
