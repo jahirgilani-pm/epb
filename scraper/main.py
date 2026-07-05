@@ -1,6 +1,6 @@
-import sys
 import internshala
 import naukri
+import indeed
 import sheets
 
 
@@ -21,10 +21,13 @@ def main():
     print("\n-- Internshala --")
     is_jobs = internshala.scrape()
 
+    print("\n-- Indeed --")
+    indeed_jobs = indeed.scrape()
+
     print("\n-- Naukri --")
     naukri_jobs = naukri.scrape()
 
-    all_jobs = deduplicate(is_jobs + naukri_jobs)
+    all_jobs = deduplicate(is_jobs + indeed_jobs + naukri_jobs)
     print(f"\nTotal unique jobs scraped: {len(all_jobs)}")
 
     print("\n-- Writing to Google Sheets --")
