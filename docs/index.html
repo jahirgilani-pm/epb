@@ -96,7 +96,7 @@
 
     /* ── Stats bar ── */
     .stats-bar {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 16px auto 0;
       padding: 0 24px;
       display: flex;
@@ -105,6 +105,17 @@
     }
     .stats-bar .count { font-size: 0.82rem; color: #6b7280; }
     .stats-bar .count strong { color: #111827; font-weight: 600; }
+    .last-updated { font-size: 0.75rem; color: #9ca3af; }
+
+    .edu-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: #f0fdf4;
+      color: #166534;
+      border-radius: 5px;
+      padding: 2px 7px;
+    }
 
     /* ── Grid ── */
     .jobs-grid {
@@ -253,6 +264,14 @@
     <select id="location" onchange="renderJobs()">
       <option value="">All Locations</option>
     </select>
+    <select id="education" onchange="renderJobs()">
+      <option value="">All Education</option>
+      <option value="B.Tech/BE">B.Tech / BE</option>
+      <option value="MBA/PG">MBA / PG</option>
+      <option value="B.Com/BBA">B.Com / BBA</option>
+      <option value="12th/Diploma">12th / Diploma</option>
+      <option value="Any Graduate">Any Graduate</option>
+    </select>
     <select id="source" onchange="renderJobs()">
       <option value="">All Sources</option>
       <option value="Internshala">Internshala</option>
@@ -264,6 +283,7 @@
 
 <div class="stats-bar">
   <p class="count" id="meta"></p>
+  <span class="last-updated" id="last-updated"></span>
 </div>
 
 <div class="jobs-grid" id="jobs">
@@ -279,8 +299,9 @@
     try {
       const resp = await fetch(CSV_URL);
       const csv = await resp.text();
-      allJobs = parseCSV(csv);
+      allJobs = parseCSV(csv).map(j => ({ ...j, _edu: inferEducation(j), _area: normalizeArea(j["Location"]) }));
       populateLocations(allJobs);
+      showLastUpdated(allJobs);
       renderJobs();
     } catch (e) {
       document.getElementById("jobs").innerHTML = '<div class="state-box"><div class="icon">&#9888;</div><p>Failed to load jobs. Please try again later.</p></div>';
@@ -313,20 +334,44 @@
     return 9999;
   }
 
+  function normalizeArea(raw) {
+    if (!raw) return "";
+    let area = raw.split(",")[0].trim();
+    if (/^bangal/i.test(area)) area = "Bengaluru";
+    return area;
+  }
+
+  function inferEducation(job) {
+    const text = ((job["Description"] || "") + " " + (job["Job Title"] || "") + " " + (job["Experience"] || "")).toLowerCase();
+    if (/b\.?tech|b\.?e\b|btech|engineering graduate|be\/b/.test(text)) return "B.Tech/BE";
+    if (/\bmba\b|pgdm|post.?graduate/.test(text)) return "MBA/PG";
+    if (/b\.?com|bba|bms|\bcommerce/.test(text)) return "B.Com/BBA";
+    if (/12th|hsc|\bpuc\b|intermediate|\bdiploma/.test(text)) return "12th/Diploma";
+    if (/any graduate|any degree|graduate|bachelor/.test(text)) return "Any Graduate";
+    return "";
+  }
+
   function populateLocations(jobs) {
     const seen = new Set();
     const sel = document.getElementById("location");
     jobs.forEach(j => {
-      const loc = (j["Location"] || "").trim();
-      if (loc && !seen.has(loc)) { seen.add(loc); }
+      const area = normalizeArea(j["Location"]);
+      if (area) seen.add(area);
     });
-    const sorted = [...seen].sort();
-    sorted.forEach(loc => {
+    [...seen].sort().forEach(area => {
       const opt = document.createElement("option");
-      opt.value = loc;
-      opt.textContent = loc;
+      opt.value = area;
+      opt.textContent = area;
       sel.appendChild(opt);
     });
+  }
+
+  function showLastUpdated(jobs) {
+    const dates = jobs.map(j => j["Scraped Date"]).filter(Boolean).sort().reverse();
+    if (!dates.length) return;
+    const d = new Date(dates[0]);
+    const fmt = d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    document.getElementById("last-updated").textContent = "Last updated: " + fmt;
   }
 
   function parseCSVLine(line) {
@@ -352,12 +397,14 @@
     const search = document.getElementById("search").value.toLowerCase();
     const category = document.getElementById("category").value;
     const location = document.getElementById("location").value;
+    const education = document.getElementById("education").value;
     const source = document.getElementById("source").value;
 
     const filtered = allJobs.filter(j => {
       if (search && !j["Job Title"].toLowerCase().includes(search) && !j["Company"].toLowerCase().includes(search)) return false;
       if (category && j["Category"] !== category) return false;
-      if (location && j["Location"] !== location) return false;
+      if (location && j["_area"] !== location) return false;
+      if (education && j["_edu"] !== education) return false;
       if (source && j["Source"] !== source) return false;
       return true;
     }).sort((a, b) => {
@@ -391,7 +438,10 @@
           ${j["Experience"] ? `<span class="chip"><span class="chip-icon">&#128188;</span>${esc(j["Experience"])}</span>` : ""}
           ${j["Salary"] ? `<span class="chip"><span class="chip-icon">&#8377;</span>${esc(j["Salary"])}</span>` : ""}
         </div>
-        ${j["Category"] ? `<div><span class="category-tag">${esc(j["Category"])}</span></div>` : ""}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${j["Category"] ? `<span class="category-tag">${esc(j["Category"])}</span>` : ""}
+          ${j["_edu"] ? `<span class="edu-tag">${esc(j["_edu"])}</span>` : ""}
+        </div>
         <div class="card-footer">
           <span class="posted">${esc(j["Posted"] || j["Scraped Date"] || "")}</span>
           <a class="apply-btn" href="${esc(j["Apply URL"])}" target="_blank" rel="noopener noreferrer">Apply &rarr;</a>
