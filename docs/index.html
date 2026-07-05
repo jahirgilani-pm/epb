@@ -212,6 +212,7 @@
     .apply-btn:hover { background: #1d4ed8; }
 
     /* ── States ── */
+    .jobs-grid .state-box { grid-column: 1 / -1; }
     .state-box {
       max-width: 1100px;
       margin: 48px auto;
@@ -321,7 +322,7 @@
   }
 
   function postedScore(posted) {
-    if (!posted) return 9999;
+    if (!posted) return 0;
     const s = posted.toLowerCase();
     if (s.includes("today") || s.includes("just") || s.includes("hour")) return 0;
     const days = s.match(/(\d+)\s*day/);
